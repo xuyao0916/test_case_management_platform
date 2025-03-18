@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试用例管理平台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>上传需求文档生成测试用例</h1>
+    <form method="post">
+        <label for="requirements">请输入需求文档内容:</label><br>
+        <textarea id="requirements" name="requirements" rows="10" cols="80"></textarea><br>
+        <input type="submit" value="生成测试用例">
+    </form>
+    <a href="{{ url_for('test_cases') }}">查看所有测试用例</a>
+</body>
+</html>

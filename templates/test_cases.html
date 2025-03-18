@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>所有测试用例</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>所有测试用例</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>测试项目</th>
+                <th>测试步骤</th>
+                <th>预期结果</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for case in test_cases %}
+            <tr>
+                <td>{{ case.project }}</td>
+                <td>
+                    <ul>
+                        {% for step in case.steps %}
+                        <li>{{ step }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                        {% for res in case.result %}
+                        <li>{{ res }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('index') }}">返回首页</a>
+</body>
+</html>
