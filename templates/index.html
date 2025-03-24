@@ -2,16 +2,338 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>测试用例管理平台</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试管理平台</title>
+    <style>
+        /* 样式定义 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .header {
+            padding: 10px;
+            background-color: #f1f1f1;
+            width: 100%;
+            display: flex;
+            align-items: center;
+        }
+        .header img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        /* 主内容区域及导航栏 */
+        .container {
+            display: flex;
+            flex: 1;
+        }
+        .sidebar {
+            flex-shrink: 0;
+            width: 150px;
+            background-color: #f4f4f4;
+            padding: 15px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar button {
+            padding: 10px;
+            cursor: pointer;
+            margin-bottom: 5px;
+            width: 100%;
+            border: none;
+            background-color: #ddd;
+        }
+        .sidebar button:hover, .sidebar button.active {
+            background-color: #ccc;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 15px;
+        }
+        .tab-content {
+            display: none;
+            border-top: 2px solid #ccc;
+            padding-top: 10px;
+        }
+
+        .generate-type {
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                box-shadow: none;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>上传需求文档生成测试用例</h1>
-    <form method="post">
-        <label for="requirements">请输入需求文档内容:</label><br>
-        <textarea id="requirements" name="requirements" rows="10" cols="80"></textarea><br>
-        <input type="submit" value="生成测试用例">
-    </form>
-    <a href="{{ url_for('test_cases') }}">查看所有测试用例</a>
+
+<div class="header">
+    <!-- 加入公司Logo和项目名称 -->
+    <img src="https://assets.psyai.net/public/res/release/logo.svg" alt="深锶科技" style="height:20px">
+    <h1>深锶测试管理平台</h1>
+</div>
+
+<div class="container">
+    <div class="sidebar">
+        <!-- 左侧的导航按钮 -->
+        <button class="tablinks" onclick="showSection('generate')" id="defaultTab">生成用例</button>
+        <button class="tablinks" onclick="showSection('manage')">用例管理</button>
+<!--        <a class="tablinks" href="{{ url_for('manage_test_cases') }}">用例管理</a>-->
+        <!-- 其他导航项可以在这里添加 -->
+    </div>
+
+    <div class="main-content">
+        <div id="generate" class="tab-content">
+            <div id="tab-navigation">
+                <!-- 用例类型切换按钮 -->
+                <button onclick="showGenerateType('text')">文本生成</button>
+                <button onclick="showGenerateType('file')">文件生成</button>
+            </div>
+
+            <div id="text-generate" class="generate-type">
+                <form id="text-form" onsubmit="submitTestCase(event, 'text')">
+                    <label for="test-case-text">输入测试用例文本：</label><br>
+<!--                    <link rel="stylesheet" href="style.css">-->
+                    <textarea id="test-case-text" name="requirements" required style="width: 100%; height: 150px;"></textarea><br><br>
+                    <button type="submit">生成测试用例</button>
+                    <p id="text-status"></p>
+                </form>
+            </div>
+
+            <div id="file-generate" class="generate-type">
+                <form id="file-form" onsubmit="submitTestCase(event, 'file')">
+                    <label for="test-case-file">上传测试用例文件：</label><br>
+                    <input type="file" id="test-case-file" name="file" required><br><br>
+                    <button type="submit">上传文件并生成用例</button>
+                    <p id="file-status"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- 用例管理选项卡内容 -->
+        <div id="manage" class="tab-content">
+            <h2>用例管理</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>标题</th>
+                        <th>描述</th>
+                        <th>步骤</th>
+                        <th>结果</th>
+                        <th>优先级</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for case in test_cases %}
+                    <tr>
+                        <td>{{ case.title }}</td>
+                        <td>{{ case.description }}</td>
+                        <td>
+                            <ol>
+                            {% for step in case.steps %}
+                                <li>{{ step }}</li>
+                            {% endfor %}
+                            </ol>
+                        </td>
+                        <td>
+                            <ul>
+                            {% for result in case.results %}
+                                <li>{{ result }}</li>
+                            {% endfor %}
+                            </ul>
+                        </td>
+                        <td>{{ case.priority }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function showSection(sectionId) {
+        console.log(`Navigating to section: ${sectionId}`);
+
+        // 隐藏所有tab内容
+        document.querySelectorAll('.tab-content').forEach(section => {
+            section.classList.remove('active');
+        });
+
+        // 去掉所有按钮的活动状态
+        document.querySelectorAll('.tablinks').forEach(button => {
+            button.classList.remove('active');
+        });
+
+        // 显示当前选中的内容并激活对应按钮
+        document.getElementById(sectionId).classList.add('active');
+
+        const button = document.querySelector(`.sidebar button[onclick='showSection("${sectionId}")']`);
+        if (button) {
+            button.classList.add('active');
+        } else {
+            console.error(`Button not found for section: ${sectionId}`);
+        }
+
+        if (sectionId === 'generate') {
+            showGenerateType('text');
+        } else if (sectionId === 'manage') {
+            console.log('Preparing to fetch data for manage section');
+            fetchDataAndUpdate();
+        }
+    }
+
+    function showGenerateType(type) {
+        document.querySelectorAll('.generate-type').forEach(content => {
+            content.style.display = 'none';
+        });
+        document.getElementById(type + '-generate').style.display = 'block';
+    }
+
+    function submitTestCase(event, type) {
+        event.preventDefault();
+        const formData = new FormData();
+        let statusText;
+
+        if (type === 'text') {
+            const requirements = document.getElementById('test-case-text').value.trim();
+            if (!requirements) {
+                document.getElementById('text-status').textContent = '请输入用例文本。';
+                return;
+            }
+            formData.append('requirements', requirements);
+            statusText = document.getElementById('text-status');
+        } else if (type === 'file') {
+            const fileInput = document.getElementById('test-case-file');
+            if (fileInput.files.length === 0) {
+                document.getElementById('file-status').textContent = '请选择文件。';
+                return;
+            }
+            formData.append('file', fileInput.files[0]);
+            statusText = document.getElementById('file-status');
+        }
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/generate', true);
+
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                statusText.textContent = '测试用例生成成功！';
+                window.location.href = '/test_cases';
+            } else {
+                statusText.textContent = '生成失败，请重试！';
+            }
+        };
+
+        xhr.onerror = function() {
+            statusText.textContent = '网络错误，请检查您的连接。';
+        };
+
+        xhr.send(formData);
+    }
+
+    function fetchDataAndUpdate() {
+        fetch('/api/test_cases')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const tbody = document.querySelector('#manage tbody');
+                tbody.innerHTML = ''; // 清空现有内容
+                data.forEach(caseData => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${caseData.title}</td>
+                        <td>${caseData.description}</td>
+                        <td><ol>${caseData.steps.map(step => `<li>${step}</li>`).join('')}</ol></td>
+                        <td><ul>${caseData.results.map(result => `<li>${result}</li>`).join('')}</ul></td>
+                        <td>${caseData.priority}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
+    }
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+    // 确保在 Document 完全加载后执行
+    function showSection(sectionId) {
+        console.log(`Navigating to section: ${sectionId}`);
+
+        // 隐藏所有tab内容
+        document.querySelectorAll('.tab-content').forEach(section => {
+            section.classList.remove('active');
+        });
+
+        // 去掉所有按钮的活动状态
+        document.querySelectorAll('.tablinks').forEach(button => {
+            button.classList.remove('active');
+        });
+
+        // 显示当前选中的内容并激活对应按钮
+        document.getElementById(sectionId).classList.add('active');
+
+        const selector = `.sidebar button[onclick='showSection("${sectionId}")']`;
+        console.log(`Using selector: ${selector}`);
+        const button = document.querySelector(selector);
+
+        if (button) {
+            button.classList.add('active');
+        } else {
+            console.error(`Button not found for section: ${sectionId}`);
+        }
+
+        if (sectionId === 'generate') {
+            showGenerateType('text');
+        } else if (sectionId === 'manage') {
+            console.log('Preparing to fetch data for manage section');
+            fetchDataAndUpdate();
+        }
+    }
+
+    // 事件绑定或者直接在HTML中调用showSection，确保DOM元素存在
+});
+
+    // 初始化默认显示
+    document.getElementById("defaultTab").click();
+</script>
+
+
 </body>
 </html>
